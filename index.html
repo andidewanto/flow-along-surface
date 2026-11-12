@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Along Surface: SketchUp extension by Andi Dewanto</title>
+<meta name="description" content="Flow Along Surface 1.2.0: free SketchUp extension by Andi Dewanto. Bend 3D text or a logo onto a curved wall, or place copies along it. Download, tutorial and support (English / Indonesian).">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root {
+    --desk:#e6e6e3; --win:#fbfbfa; --side:#efefec; --bar:#ececea; --card:#ffffff; --line:#dcdcd7;
+    --ink:#1d1d1b; --muted:#6c6b66; --accent:#2f6fd6; --accent-ink:#ffffff; --sel:#dedeD9; --btn:#ffffff; --tip:#eef3fc;
+    --panel:#f4f4f2; --shadow:0 24px 60px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --desk:#161615; --win:#262624; --side:#1f1f1e; --bar:#2b2b29; --card:#2f2f2d; --line:#3b3b38;
+      --ink:#ecebe8; --muted:#9d9b95; --accent:#5b9cf0; --accent-ink:#ffffff; --sel:#3a3a37; --btn:#3a3a37; --tip:#24304a;
+      --panel:#2f2f2d; --shadow:0 24px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.04);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 16px; }
+  body { margin:0; background:var(--desk); color:var(--ink); font:15px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .window { background: var(--win); min-height: 100vh; }
+  .brand { display: block; width: 100%; margin: 0 0 14px; padding: 0 6px; }
+  .brand img, .hero .brand img { width: 100%; height: auto; display: block; }
+  .titlebar { position: sticky; top: 0; z-index: 5; height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 14px; background: color-mix(in srgb, var(--bar) 88%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-bottom: 1px solid var(--line); }
+  .titlebar .title { flex: 1; text-align: center; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .langbar { display: flex; flex: none; background: var(--sel); border-radius: 7px; padding: 2px; gap: 0; margin: 0; }
+  .langbar button { font: 600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 3px 12px; border-radius: 5px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+  .langbar button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+  .split { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 70vh; }
+  .sidebar { background: var(--side); border-right: 1px solid var(--line); padding: 16px 10px; }
+  .sidebar .inner { position: sticky; top: 64px; }
+  .side-app { display: flex; gap: 10px; align-items: center; padding: 4px 8px 14px; }
+  .side-app img { width: 40px; height: 40px; }
+  .side-app b { display: block; font-size: 14px; line-height: 1.2; }
+  .side-app span { font-size: 12px; color: var(--muted); }
+  .sidebar nav a { display: flex; align-items: center; gap: 9px; padding: 6px 10px; border-radius: 7px; color: var(--ink); font-size: 13.5px; text-decoration: none; }
+  .sidebar nav a:hover { background: var(--sel); text-decoration: none; }
+  .sidebar nav a.active { background: var(--sel); font-weight: 600; }
+  .sidebar nav a img { width: 20px; height: 20px; border-radius: 5px; }
+  .sidebar nav svg { width: 16px; height: 16px; flex: none; color: var(--accent); }
+  .side-sep { font-size: 11px; font-weight: 600; color: var(--muted); padding: 16px 10px 4px; text-transform: none; }
+  .content { padding: 34px 40px 48px; min-width: 0; }
+  .content > section { margin: 0 0 36px; }
+  .hero { display: flex; gap: 22px; align-items: center; margin: 0 0 22px; }
+  .hero img { width: 108px; height: 108px; flex: none; }
+  .hero > div { min-width: 0; }
+  .content p, .content li { overflow-wrap: anywhere; }
+  h1 { font-size: 30px; line-height: 1.15; margin: 0 0 4px; letter-spacing: -.01em; color: var(--ink); }
+  .sub, .lead { color: var(--muted); margin: 0; font-size: 15px; }
+  h2 { font-size: 20px; margin: 0 0 12px; letter-spacing: -.005em; }
+  .content h2 { padding-bottom: 0; border: 0; }
+  h3 { font-size: 15px; margin: 20px 0 8px; }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 8px; font-weight: 600; font-size: 13.5px; background: var(--btn); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 1px 1px rgba(0,0,0,.06); text-decoration: none; }
+  .btn:hover { text-decoration: none; filter: brightness(1.06); }
+  .btn.primary { background: linear-gradient(#3d82ee, #2a68d6); color: #fff; border-color: #2a62c9; }
+  .group { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px 18px; }
+  .group > * { margin: 0; }
+  .group ol, .group ul { padding: 12px 0 12px 20px; }
+  .group li { margin: 4px 0; }
+  .rows details { border-bottom: 1px solid var(--line); padding: 11px 0; }
+  .rows details:last-child { border-bottom: 0; }
+  .rows summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  .rows summary::-webkit-details-marker { display: none; }
+  .rows summary::after { content: "›"; color: var(--muted); transform: rotate(0deg); transition: transform .15s; font-weight: 400; }
+  .rows details[open] summary::after { transform: rotate(90deg); }
+  .rows details p { margin: 6px 0 0; color: var(--muted); }
+  .app { display: flex; gap: 16px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .app:last-child { border-bottom: 0; }
+  .app > img { width: 72px; height: 72px; flex: none; }
+  .app h2 { margin: 0; font-size: 17px; }
+  .app .ver { color: var(--muted); font-size: 12.5px; }
+  .app p { margin: 6px 0 0; }
+  .media { margin: 16px 0 0; }
+  .media video, .shots img, figure img, figure video { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #111; display: block; }
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 12px 0 0; }
+  .shots img { background: #f6f6f6; }
+  figure { margin: 16px 0; }
+  figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 3px 0; }
+  kbd { font: 12px ui-monospace, "SF Mono", Menlo, monospace; background: var(--card); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; }
+  code { font: 13px ui-monospace, "SF Mono", Menlo, monospace; background: var(--sel); padding: 1px 5px; border-radius: 5px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; background: var(--card); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--panel); font-weight: 600; }
+  .wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; margin: 10px 0; }
+  .wrap table { margin: 0; }
+  .tip { background: var(--tip); border-radius: 10px; padding: 10px 14px; margin: 14px 0; border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); }
+  .tip b { color: var(--accent); }
+  .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 12px 0; }
+  .tool { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; gap: 12px; align-items: flex-start; }
+  .tool .ic { width: 40px; height: 40px; flex: none; background: #fff; border-radius: 9px; display: grid; place-items: center; border: 1px solid var(--line); }
+  .tool .ic svg { width: 28px; height: 28px; }
+  .tool b { display: block; }
+  .tool span { color: var(--muted); font-size: 13.5px; }
+  .contact { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+  footer { margin-top: 36px; color: var(--muted); font-size: 12.5px; }
+  html[data-lang="en"] .id, html[data-lang="id"] .en { display: none !important; }
+  @media (max-width: 780px) {
+    .window { margin: 0; border-radius: 0; border: 0; }
+    .split { grid-template-columns: minmax(0, 1fr); }
+    .hero { align-items: flex-start; }
+    .content table { display: block; overflow-x: auto; max-width: 100%; }
+    .sidebar { border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; }
+    .sidebar .inner { position: static; }
+    .side-app { display: none; }
+    .brand { width: 72px; margin: 6px auto 10px; padding: 0; }
+    .sidebar nav { display: flex; gap: 4px; overflow-x: auto; white-space: nowrap; }
+    .side-sep { display: none; }
+    .content { padding: 22px 16px 40px; }
+    .hero img { width: 76px; height: 76px; }
+    h1 { font-size: 25px; }
+  }
+</style>
+<script>
+  // Bahasa: ?lang=en|id → pilihan terakhir → bahasa browser (id → Indonesia, lainnya Inggris).
+  (function () {
+    var d = document.documentElement, q = (location.search.match(/lang=(en|id)/) || [])[1], s = null;
+    try { s = localStorage.getItem('ad_lang'); } catch (e) {}
+    d.dataset.lang = q || s || ((navigator.language || '').toLowerCase().indexOf('id') === 0 ? 'id' : 'en');
+    d.lang = d.dataset.lang;
+  })();
+</script>
+</head>
+<body>
+<div class="window">
+  <header class="titlebar"><div class="title">Flow Along Surface</div><nav class="langbar" aria-label="Language"><button data-l="en">EN</button><button data-l="id">ID</button></nav></header>
+  <div class="split">
+    <aside class="sidebar"><div class="inner">
+      <a class="brand" href="https://andidewanto.github.io/sketchup-extensions/" title="Andi Dewanto"><img src="images/brand-andidewanto.png" alt="Andi Dewanto logo"></a>
+      <div class="side-app"><img src="images/flow-along-surface-logo.png" alt=""><div><b>Flow Along Surface</b><span><span class="en">Version</span><span class="id">Versi</span> 1.2.0</span></div></div>
+      <nav>
+      <a href="#overview" class="active"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v4M8 4.8v.1" stroke-linecap="round"/></svg><span class="en">Overview</span><span class="id">Ringkasan</span></a>
+      <a href="#bend"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2.5 5.5Q8 9 13.5 5.5M2.5 10.5Q8 14 13.5 10.5"/></svg>Bend onto Surface</a>
+      <a href="#array"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="6" width="3" height="5" rx=".6"/><rect x="6.5" y="4.5" width="3" height="5" rx=".6"/><rect x="11" y="6" width="3" height="5" rx=".6"/></svg>Array Along Surface</a>
+      <a href="#install"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v6M5.5 8.2 8 10.7l2.5-2.5"/></svg><span class="en">Install</span><span class="id">Instalasi</span></a>
+      <a href="tutorial.html"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2.5 3.5c2-.8 3.8-.6 5.5.6v9c-1.7-1.2-3.5-1.4-5.5-.6zM13.5 3.5c-2-.8-3.8-.6-5.5.6v9c1.7-1.2 3.5-1.4 5.5-.6z"/></svg>Tutorial</a>
+      <a href="#faq"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4M8 11.6v.1"/></svg>FAQ</a>
+      <a href="#versions"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v4M8 4.8v.1" stroke-linecap="round"/></svg><span class="en">Version history</span><span class="id">Riwayat versi</span></a>
+      <a href="#contact"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="2" y="3.5" width="12" height="9" rx="2"/><path d="m2.5 4.5 5.5 4.2 5.5-4.2"/></svg><span class="en">Contact</span><span class="id">Kontak</span></a>
+      <div class="side-sep"><span class="en">More extensions</span><span class="id">Extension lain</span></div>
+      <a href="https://andidewanto.github.io/solid-panel/"><img src="https://andidewanto.github.io/solid-panel/images/solid-panel-logo.png" alt="">Solid Panel</a>
+      <a href="https://andidewanto.github.io/quick-dimension/"><img src="https://andidewanto.github.io/quick-dimension/images/quick-dimension-logo.png" alt="">Quick Dimension</a>
+      <a href="https://andidewanto.github.io/zone-stretch/"><img src="https://andidewanto.github.io/zone-stretch/images/zone-stretch-logo.png" alt="">Zone Stretch</a>
+      <a href="https://andidewanto.github.io/simple-bevel/"><img src="https://andidewanto.github.io/simple-bevel/images/simple-bevel-logo.png" alt="">Simple Bevel</a>
+      <a href="https://andidewanto.github.io/mapeasy/"><img src="https://andidewanto.github.io/mapeasy/images/mapeasy-logo.png" alt="">MapEasy</a>
+      <a href="https://andidewanto.github.io/sketchup-extensions/"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1.2"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1.2"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1.2"/><rect x="9" y="9" width="4.5" height="4.5" rx="1.2"/></svg><span class="en">All extensions</span><span class="id">Semua extension</span></a>
+      </nav>
+    </div></aside>
+    <main class="content">
+      <section id="overview">
+        <div class="hero"><img src="images/flow-along-surface-logo.png" alt="Flow Along Surface icon" width="108" height="108"><div><h1>Flow Along Surface</h1><p class="sub"><span class="en">Bend text and logos onto curved walls, or place copies along them.</span><span class="id">Tekuk teks dan logo ke dinding lengkung, atau tempatkan copy di sepanjangnya.</span></p><p class="sub" style="font-size:13px"><span class="en">Free SketchUp extension · Made on SketchUp 2026 for macOS · Version</span><span class="id">Extension SketchUp gratis · Dibuat di SketchUp 2026 untuk macOS · Versi</span> 1.2.0</p>
+          <div class="btns"><a class="btn primary" href="downloads/ad_flow_along_surface-1.2.0.rbz"><span class="en">Download</span><span class="id">Unduh</span> .rbz</a><a class="btn" href="tutorial.html">Tutorial</a></div></div></div>
+        <p class="en">Two tools for curved walls, counters and columns. <b>Bend onto Surface</b> wraps 3D text, a logo or a panel onto the surface and keeps its length, like Flow Along Surface in other 3D apps. <b>Array Along Surface</b> places copies of an object along the surface, each one turned to follow the curve.</p><p class="id">Dua tool untuk dinding lengkung, counter, dan kolom. <b>Bend onto Surface</b> menekuk teks 3D, logo, atau panel ke surface dengan panjang tetap, seperti Flow Along Surface di aplikasi 3D lain. <b>Array Along Surface</b> menempatkan copy object di sepanjang surface, masing-masing berputar mengikuti lengkungan.</p>
+        <div class="shots"><img src="images/flow-along-surface-bend-6.png" alt="Flat 3D text above and the same text bent onto a curved counter" width="1662" height="1546" style="height:auto;max-width:760px"></div>
+        <h2><span class="en">What it does</span><span class="id">Fungsinya</span></h2>
+        <div class="group"><ul class="en"><li><b>Bend onto Surface:</b> 3D text, logos and panels follow the curve and keep their length and thickness. Letters with holes (A, d, o, e) stay solid.</li><li><b>Drag to place:</b> drag in the view to slide the object along the surface and up or down, then press <kbd>Enter</kbd>.</li><li><b>Array Along Surface:</b> copies by count or by spacing, with start and end offsets, height and gap, each copy turned with the curve.</li><li><b>Live preview:</b> an orange outline shows the result before anything is made.</li><li><b>Nothing is changed:</b> results are new groups, your original stays, and one Undo takes them away.</li><li><b>Works on:</b> curved walls, S-shaped counters, round columns, arches and flat walls.</li></ul><ul class="id"><li><b>Bend onto Surface:</b> teks 3D, logo, dan panel mengikuti lengkungan dengan panjang dan tebal tetap. Huruf berlubang (A, d, o, e) tetap solid.</li><li><b>Geser dengan mouse:</b> seret di viewport untuk menggeser object sepanjang surface dan naik-turun, lalu tekan <kbd>Enter</kbd>.</li><li><b>Array Along Surface:</b> copy berdasarkan jumlah atau jarak, dengan offset awal dan akhir, tinggi dan gap, tiap copy berputar mengikuti lengkungan.</li><li><b>Preview langsung:</b> garis oranye menunjukkan hasilnya sebelum dibuat.</li><li><b>Tidak ada yang diubah:</b> hasilnya group baru, object asli tetap ada, dan satu kali Undo membatalkannya.</li><li><b>Bekerja pada:</b> dinding lengkung, counter bentuk S, kolom bulat, lengkungan plafon, dan dinding datar.</li></ul></div>
+
+        <h2 id="bend"><span class="en">How to Bend</span><span class="id">Cara Bend</span></h2>
+        <div class="group"><ol class="en"><li><b>Select the object</b> you want to bend, such as 3D text or a logo (a group or component).</li><li><b>Right-click</b> and choose <b>Flow Along Surface › Bend onto Surface</b>.</li><li><b>Click the target surface.</b> It is outlined in blue, and an orange preview of the bent object appears.</li><li><b>Click and drag</b> in the view to move the object along the surface.</li><li>When it looks right, click <b>Bend</b> (or press <kbd>Enter</kbd>).</li><li><b>Done.</b> The bent copy is created as a new group. Your original object stays untouched, unless you ticked <i>Delete the original</i>.</li></ol><ol class="id"><li><b>Pilih object</b> yang ingin ditekuk, misalnya teks 3D atau logo (group atau component).</li><li><b>Klik kanan</b>, lalu pilih <b>Flow Along Surface › Bend onto Surface</b>.</li><li><b>Klik surface tujuan.</b> Surface ditandai garis biru, dan preview oranye hasil tekukan langsung muncul.</li><li><b>Klik dan seret</b> di viewport untuk menggeser object di atas surface.</li><li>Kalau posisinya sudah pas, klik <b>Bend</b> (atau tekan <kbd>Enter</kbd>).</li><li><b>Selesai.</b> Hasil tekukan dibuat sebagai group baru. Object asli tetap utuh, kecuali opsi <i>Delete the original</i> dicentang.</li></ol></div>
+        <div class="shots"><img src="images/flow-along-surface-bend-1.png" alt="3D text AndiZero selected above a curved counter" width="1642" height="1000" style="height:auto;max-width:760px"><img src="images/flow-along-surface-bend-4.png" alt="An orange preview of the text bent onto the counter front" width="1584" height="1514" style="height:auto;max-width:760px"></div>
+        <p class="en">Full steps with every screenshot are in the <a href="tutorial.html#s2">tutorial</a>.</p><p class="id">Langkah lengkap dengan semua screenshot ada di <a href="tutorial.html#s2">tutorial</a>.</p>
+
+        <h2 id="array"><span class="en">How to Array Along Surface</span><span class="id">Cara Array Along Surface</span></h2>
+        <div class="group"><ol class="en"><li><b>Select the object</b> you want to repeat, such as a fence post, a lamp or a panel (a group or component).</li><li><b>Right-click</b> and choose <b>Flow Along Surface › Array Along Surface</b>.</li><li><b>Click the target surface.</b> It is outlined in blue, and an arrow shows the direction the copies will run.</li><li><b>Set the copies</b> in the dialog: choose <b>Count</b> (number of copies) or <b>Spacing</b> (distance between copies), then adjust the start/end offset, height and gap. Orange boxes preview where each copy will go.</li><li>When it looks right, click <b>Place</b>.</li><li><b>Done.</b> All copies are placed in one new group and turn with the curve. Your original object stays untouched, unless you ticked <i>Delete the original</i>.</li></ol><ol class="id"><li><b>Pilih object</b> yang ingin diperbanyak, misalnya tiang pagar, lampu, atau panel (group atau component).</li><li><b>Klik kanan</b>, lalu pilih <b>Flow Along Surface › Array Along Surface</b>.</li><li><b>Klik surface tujuan.</b> Surface ditandai garis biru, dan tanda panah menunjukkan arah urutan copy.</li><li><b>Atur copy</b> di dialog: pilih <b>Count</b> (jumlah copy) atau <b>Spacing</b> (jarak antar copy), lalu sesuaikan offset awal/akhir, tinggi, dan gap. Kotak oranye menunjukkan posisi setiap copy.</li><li>Kalau sudah pas, klik <b>Place</b>.</li><li><b>Selesai.</b> Semua copy masuk ke satu group baru dan berputar mengikuti lengkungan. Object asli tetap utuh, kecuali opsi <i>Delete the original</i> dicentang.</li></ol></div>
+        <div class="shots"><img src="images/flow-along-surface-array.png" alt="Six panels placed along a curved wall, each turned with the curve" width="1200" height="800" style="height:auto;max-width:760px"></div>
+        <div class="tip"><span class="en"><b>Tip</b> Version 1 works on surfaces that bend <b>one way only</b>: curved walls, S-shaped counters, round columns, arches and flat walls. Domes, spheres and free-form surfaces are not supported yet, and the tool tells you so.</span><span class="id"><b>Tips</b> Versi 1 bekerja pada surface yang melengkung <b>satu arah saja</b>: dinding lengkung, counter bentuk S, kolom bulat, lengkungan plafon, dan dinding datar. Kubah, bola, dan bentuk bebas belum didukung, dan tool akan memberi tahu.</span></div>
+      </section>
+
+      <section id="install">
+        <h2><span class="en">Install</span><span class="id">Instalasi</span></h2>
+        <div class="group"><ol class="en"><li>Download the <code>.rbz</code> above.</li><li>SketchUp: <b>Extensions › Extension Manager › Install Extension…</b> and choose the <code>.rbz</code>.</li><li>Use <b>Extensions › Flow Along Surface</b>, right-click a selected object, or show the toolbar in <b>View › Toolbars</b>. Full guide: <a href="tutorial.html">Tutorial</a>.</li></ol><ol class="id"><li>Unduh file <code>.rbz</code> di atas.</li><li>SketchUp: <b>Extensions › Extension Manager › Install Extension…</b> lalu pilih file <code>.rbz</code>.</li><li>Gunakan <b>Extensions › Flow Along Surface</b>, klik kanan object yang dipilih, atau tampilkan toolbar di <b>View › Toolbars</b>. Panduan lengkap: <a href="tutorial.html">Tutorial</a>.</li></ol></div>
+        <p class="en">Having trouble installing? See <a href="tutorial.html#mulai">Start here</a>: it explains every step in plain words.</p><p class="id">Kesulitan memasang? Lihat <a href="tutorial.html#mulai">Mulai dari nol</a>: tiap langkah dijelaskan dengan bahasa sehari-hari.</p>
+        <p class="en">Made and used on SketchUp 2026 for macOS. Not yet tested on Windows or on older SketchUp versions.</p><p class="id">Dibuat dan dipakai di SketchUp 2026 untuk macOS. Belum diuji di Windows atau SketchUp versi lama.</p>
+      </section>
+
+      <section id="faq">
+        <h2>FAQ</h2>
+        <div class="group rows"><details><summary><span class="en">"This surface bends in more than one direction."</span><span class="id">"This surface bends in more than one direction."</span></summary><p><span class="en">The surface is a dome, a sphere or a free form. Version 1 only works on surfaces that bend one way, such as curved walls, columns and arches.</span><span class="id">Surface-nya berupa kubah, bola, atau bentuk bebas. Versi 1 hanya bekerja pada surface yang melengkung satu arah, seperti dinding lengkung, kolom, dan lengkungan plafon.</span></p></details><details><summary><span class="en">"The edges of this surface branch…"</span><span class="id">"The edges of this surface branch…"</span></summary><p><span class="en">Extra lines on the surface, such as ribs or drawn lines, make its curve unclear. Pick a clean surface, or remove the extra lines.</span><span class="id">Garis tambahan di surface, misalnya rib atau garis gambar, membuat lengkungannya tidak jelas. Pilih surface yang bersih, atau hapus garis tambahannya.</span></p></details><details><summary><span class="en">My text reads backwards after bending.</span><span class="id">Teks terbaca terbalik setelah ditekuk.</span></summary><p><span class="en">Undo, run Bend onto Surface again and tick <b>Use the other side as front</b>.</span><span class="id">Undo, jalankan Bend onto Surface lagi, lalu centang <b>Use the other side as front</b>.</span></p></details><details><summary><span class="en">My text runs up the wall instead of along it.</span><span class="id">Teks berjalan naik, bukan sepanjang dinding.</span></summary><p><span class="en">Tick or untick <b>Turn 90°</b>. The longest side of the object normally runs along the curve.</span><span class="id">Centang atau hapus centang <b>Turn 90°</b>. Sisi terpanjang object biasanya berjalan sepanjang lengkungan.</span></p></details><details><summary><span class="en">The bent object looks slightly faceted.</span><span class="id">Hasil tekukan terlihat sedikit bersegi.</span></summary><p><span class="en">The object follows the segments of your wall exactly. For a smoother bend, draw the wall's arc with more segments.</span><span class="id">Object mengikuti segmen dinding Anda dengan tepat. Untuk tekukan lebih halus, gambar arc dinding dengan segmen lebih banyak.</span></p></details><details><summary><span class="en">The array copies face the wrong way.</span><span class="id">Copy array menghadap ke arah yang salah.</span></summary><p><span class="en">The back of each copy (its green-axis side) sits on the surface. Use the <b>Turn</b> buttons, for example 180°.</span><span class="id">Bagian belakang tiap copy (sisi sumbu hijau) menempel di surface. Gunakan tombol <b>Turn</b>, misalnya 180°.</span></p></details><details><summary><span class="en">How do I type lengths?</span><span class="id">Bagaimana mengetik panjang?</span></summary><p><span class="en">Type the number with its unit, for example <code>20mm</code>, <code>12,5mm</code> or <code>1.2m</code>. A dot or a comma both work. A bare number uses the unit of your model.</span><span class="id">Ketik angka beserta satuannya, misalnya <code>20mm</code>, <code>12,5mm</code>, atau <code>1.2m</code>. Titik maupun koma sama-sama bisa. Angka tanpa satuan memakai satuan model Anda.</span></p></details><details><summary><span class="en">Is my original changed?</span><span class="id">Apakah object asli berubah?</span></summary><p><span class="en">No, unless you tick <b>Delete the original</b>. Undo brings it back.</span><span class="id">Tidak, kecuali Anda mencentang <b>Delete the original</b>. Undo mengembalikannya.</span></p></details></div>
+      </section>
+
+      <section id="versions">
+        <h2><span class="en">Version history</span><span class="id">Riwayat versi</span></h2>
+        <div class="group"><ul class="en"><li><b>1.2.0</b> · 2026-11-12: drag in the view to move the object in Bend onto Surface; <kbd>Enter</kbd> bends.</li><li><b>1.1.1</b> · 2026-11-12: lengths with a comma or a dot both work.</li><li><b>1.1.0</b> · 2026-11-12: new <b>Bend onto Surface</b>.</li><li><b>1.0.0</b> · 2026-11-12: first version, with <b>Array Along Surface</b>.</li></ul><ul class="id"><li><b>1.2.0</b> · 2026-11-12: seret di viewport untuk menggeser object di Bend onto Surface; <kbd>Enter</kbd> menjalankan Bend.</li><li><b>1.1.1</b> · 2026-11-12: panjang dengan koma maupun titik sama-sama bisa.</li><li><b>1.1.0</b> · 2026-11-12: <b>Bend onto Surface</b> baru.</li><li><b>1.0.0</b> · 2026-11-12: versi pertama, dengan <b>Array Along Surface</b>.</li></ul></div>
+      </section>
+
+      <section id="contact">
+        <h2><span class="en">Contact &amp; bug reports</span><span class="id">Kontak &amp; laporan bug</span></h2>
+        <div class="contact"><span class="en">Email <a href="mailto:andidewanto@gmail.com">andidewanto@gmail.com</a>. Please include your SketchUp version, operating system, the extension version and, if possible, a small .skp that shows the problem.</span><span class="id">Email <a href="mailto:andidewanto@gmail.com">andidewanto@gmail.com</a>. Sertakan versi SketchUp, sistem operasi, versi extension, dan jika bisa, file .skp kecil yang menunjukkan masalahnya.</span></div>
+      </section>
+
+
+      <footer><span class="en">© 2026 Andi Dewanto · Flow Along Surface is an independent extension and is not affiliated with Trimble or SketchUp.</span><span class="id">© 2026 Andi Dewanto · Flow Along Surface adalah extension independen dan tidak berafiliasi dengan Trimble atau SketchUp.</span></footer>
+    </main>
+  </div>
+</div>
+<script>
+  (function () {
+    var d = document.documentElement;
+    function sync() { document.querySelectorAll('.langbar button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.l === d.dataset.lang)); }); }
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('.langbar button');
+      if (!b) return;
+      d.dataset.lang = d.lang = b.dataset.l;
+      try { localStorage.setItem('ad_lang', b.dataset.l); } catch (err) {}
+      sync();
+    });
+    sync();
+  })();
+</script>
+<script>
+  // Sorot item sidebar sesuai bagian yang terlihat.
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.sidebar nav a[href^="#"]'));
+    if (!links.length || !('IntersectionObserver' in window)) return;
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (a) { a.classList.remove('active'); });
+        var a = map[e.target.id]; if (a) a.classList.add('active');
+      });
+    }, { rootMargin: '-10% 0px -75% 0px' });
+    Object.keys(map).forEach(function (id) { var el = document.getElementById(id); if (el) io.observe(el); });
+  })();
+</script>
+</body>
+</html>
